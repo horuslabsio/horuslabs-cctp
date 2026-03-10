@@ -125,11 +125,22 @@ async function doMint(
     process.exit(1);
   }
 
+  const destDomain = (attestationData.decodedMessage as { destinationDomain?: number })
+    ?.destinationDomain;
+  const accountAddress = process.env.STARKNET_ACCOUNT_ADDRESS || undefined;
+  if (destDomain === 25 && !accountAddress) {
+    console.error('\n✗ Starknet mint requires STARKNET_ACCOUNT_ADDRESS');
+    process.exit(1);
+  }
+
   try {
     const result = await mint(
       attestationData as Parameters<typeof mint>[0],
       privateKey,
-      { preferMainnet: network === 'mainnet' }
+      {
+        preferMainnet: network === 'mainnet',
+        accountAddress: destDomain === 25 ? accountAddress : undefined,
+      }
     );
     if (result.alreadyProcessed) {
       console.log('\n✓ Message was already minted on destination chain (no action needed).');

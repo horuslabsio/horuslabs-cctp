@@ -1,10 +1,13 @@
 /**
- * CCTP mint - receiveMessage on Circle MessageTransmitter
+ * CCTP mint - receiveMessage on Circle MessageTransmitter (EVM) or receive_message (Starknet)
  */
 
 import { ethers } from 'ethers';
 import { DOMAIN_CONFIG } from './config.js';
+import { mintStarknet } from './mint-starknet.js';
 import type { AttestationData, MintOptions, MintResult } from './types.js';
+
+const STARKNET_DOMAIN = 25;
 
 const TRANSMITTER_ABI = [
   'function receiveMessage(bytes message, bytes attestation) returns (bool)',
@@ -33,6 +36,19 @@ export async function mint(
   const destinationDomain = decodedMessage?.destinationDomain;
   if (destinationDomain === undefined || destinationDomain === null) {
     throw new Error('Attestation data missing decodedMessage.destinationDomain');
+  }
+
+  if (destinationDomain === STARKNET_DOMAIN) {
+    const accountAddress = options.accountAddress;
+    if (!accountAddress) {
+      throw new Error(
+        'Minting to Starknet (domain 25) requires accountAddress in options'
+      );
+    }
+    return mintStarknet(attestationData, privateKey, {
+      ...options,
+      accountAddress,
+    });
   }
 
   const config = DOMAIN_CONFIG[destinationDomain];

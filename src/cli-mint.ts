@@ -28,9 +28,10 @@ Usage: cctp-mint <attestation.json>
        cctp-mint -   # read from stdin (JSON)
 
 Environment:
-  PRIVATE_KEY     (required) Wallet private key
-  RPC_URL         (optional) Override destination chain RPC
-  PREFER_MAINNET  (optional) 'false' for testnet, default true
+  PRIVATE_KEY              (required) Wallet private key
+  RPC_URL                  (optional) Override destination chain RPC
+  PREFER_MAINNET           (optional) 'false' for testnet, default true
+  STARKNET_ACCOUNT_ADDRESS (required for Starknet) Deployed account contract address
 
 Example:
   PRIVATE_KEY=0x... cctp-mint attestation.json
@@ -40,6 +41,7 @@ Example:
 
   const preferMainnet = process.env.PREFER_MAINNET !== 'false';
   const rpcUrl = process.env.RPC_URL || undefined;
+  const accountAddress = process.env.STARKNET_ACCOUNT_ADDRESS || undefined;
 
   const arg = process.argv[2];
   if (!arg) {
@@ -74,10 +76,20 @@ Example:
 
   console.log('Minting USDC on destination chain...\n');
 
+  const destDomain = (data.decodedMessage as { destinationDomain?: number })
+    ?.destinationDomain;
+  if (destDomain === 25 && !accountAddress) {
+    console.error(
+      'Error: Starknet (domain 25) requires STARKNET_ACCOUNT_ADDRESS'
+    );
+    process.exit(1);
+  }
+
   try {
     const result = await mint(data as unknown as Parameters<typeof mint>[0], privateKey, {
       rpcUrl: rpcUrl ?? null,
       preferMainnet,
+      accountAddress: destDomain === 25 ? accountAddress : undefined,
     });
 
     if (result.alreadyProcessed) {

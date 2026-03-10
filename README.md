@@ -21,44 +21,49 @@ Unlike wrapped bridges, CCTP moves **native** USDC—no synthetic tokens.
 ## API
 
 ```ts
-import { fetchAttestation, pollAttestation, mint, DOMAIN_CONFIG } from '@horuslabs/cctp';
+import {
+    fetchAttestation,
+    pollAttestation,
+    mint,
+    DOMAIN_CONFIG
+} from "@horuslabs/cctp";
 
 // Single fetch (no retry)
-const result = await fetchAttestation(txHash, sourceDomain, 'testnet');
+const result = await fetchAttestation(txHash, sourceDomain, "testnet");
 
 // Fixed-interval polling until complete (suitable for 4+ hour attestations)
-const attested = await pollAttestation(txHash, sourceDomain, 'mainnet', {
-  intervalMs: 30000, // poll every 30s
-  signal: abortController.signal, // optional: cancel polling
+const attested = await pollAttestation(txHash, sourceDomain, "mainnet", {
+    intervalMs: 30000, // poll every 30s
+    signal: abortController.signal // optional: cancel polling
 });
 
 // Mint on destination chain
 const mintResult = await mint(attestationData, privateKey, {
-  preferMainnet: false,
-  rpcUrl: 'https://sepolia.base.org', // optional override
+    preferMainnet: false,
+    rpcUrl: "https://sepolia.base.org" // optional override
 });
 ```
 
 ### Exports
 
-| Export | Description |
-|--------|-------------|
-| `fetchAttestation` | One API call to Circle, returns status |
-| `pollAttestation` | Poll at fixed interval until complete or failed |
-| `mint` | Call `receiveMessage` on destination MessageTransmitter |
-| `DOMAIN_CONFIG` | Domain → RPC + transmitter address mapping |
-| `CCTP_API_URLS`, `DEFAULT_POLL_INTERVAL_MS`, `REQUEST_TIMEOUT_MS` | Config constants |
+| Export                                                            | Description                                             |
+| ----------------------------------------------------------------- | ------------------------------------------------------- |
+| `fetchAttestation`                                                | One API call to Circle, returns status                  |
+| `pollAttestation`                                                 | Poll at fixed interval until complete or failed         |
+| `mint`                                                            | Call `receiveMessage` on destination MessageTransmitter |
+| `DOMAIN_CONFIG`                                                   | Domain → RPC + transmitter address mapping              |
+| `CCTP_API_URLS`, `DEFAULT_POLL_INTERVAL_MS`, `REQUEST_TIMEOUT_MS` | Config constants                                        |
 
 ### Types
 
 ```ts
 import type {
-  AttestationResult,
-  AttestationData,
-  MintResult,
-  MintOptions,
-  PollAttestationOptions,
-} from '@horuslabs/cctp';
+    AttestationResult,
+    AttestationData,
+    MintResult,
+    MintOptions,
+    PollAttestationOptions
+} from "@horuslabs/cctp";
 ```
 
 ## CLI
@@ -94,40 +99,16 @@ npx cctp-fetch 0x... 6 testnet --json 2>/dev/null | PRIVATE_KEY=0x... npx cctp-m
 
 ## Domain IDs
 
-| Domain | Chains |
-|--------|--------|
-| 0 | Ethereum Mainnet / Sepolia |
-| 1 | Avalanche C-Chain / Fuji |
-| 2 | Optimism / OP Sepolia |
-| 3 | Arbitrum One / Arb Sepolia |
-| 6 | Base / Base Sepolia |
-| 7 | Polygon |
-
-## ChainRails Backend Integration
-
-chainrails-backend uses this package for attestation fetching. Setup:
-
-1. In `chainrails-backend/package.json`, the dependency is already added:
-   ```json
-   "@horuslabs/cctp": "file:../cctp-demo"
-   ```
-
-2. Build the cctp package first:
-   ```bash
-   cd cctp-demo && npm run build
-   ```
-
-3. Install chainrails-backend dependencies (links the local package):
-   ```bash
-   cd chainrails-backend && yarn install
-   ```
-
-4. Run the integration test:
-   ```bash
-   yarn test:cctp
-   ```
+| Domain | Chains                     |
+| ------ | -------------------------- |
+| 0      | Ethereum Mainnet / Sepolia |
+| 1      | Avalanche C-Chain / Fuji   |
+| 2      | Optimism / OP Sepolia      |
+| 3      | Arbitrum One / Arb Sepolia |
+| 6      | Base / Base Sepolia        |
+| 7      | Polygon                    |
 
 ## References
 
-- [Circle CCTP Documentation](https://developers.circle.com/stablecoins/docs/cctp-getting-started)
-- [CCTP API Reference](https://developers.circle.com/api-reference/cctp/all/get-messages-v-2)
+-   [Circle CCTP Documentation](https://developers.circle.com/stablecoins/docs/cctp-getting-started)
+-   [CCTP API Reference](https://developers.circle.com/api-reference/cctp/all/get-messages-v-2)

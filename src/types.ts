@@ -45,6 +45,8 @@ export interface MintResult {
 export interface MintOptions {
   rpcUrl?: string | null;
   preferMainnet?: boolean;
+  /** Starknet account address (required when destinationDomain is 25) */
+  accountAddress?: string;
 }
 
 export interface FetchOptions {
