@@ -37,10 +37,16 @@ const attested = await pollAttestation(txHash, sourceDomain, "mainnet", {
     signal: abortController.signal // optional: cancel polling
 });
 
-// Mint on destination chain
+// Mint on destination chain (EVM)
 const mintResult = await mint(attestationData, privateKey, {
     preferMainnet: false,
     rpcUrl: "https://sepolia.base.org" // optional override
+});
+
+// Mint on Starknet (domain 25) – requires accountAddress
+const starknetResult = await mint(attestationData, privateKey, {
+    preferMainnet: false,
+    accountAddress: "0x...", // deployed Starknet account contract
 });
 ```
 
@@ -50,7 +56,8 @@ const mintResult = await mint(attestationData, privateKey, {
 | ----------------------------------------------------------------- | ------------------------------------------------------- |
 | `fetchAttestation`                                                | One API call to Circle, returns status                  |
 | `pollAttestation`                                                 | Poll at fixed interval until complete or failed         |
-| `mint`                                                            | Call `receiveMessage` on destination MessageTransmitter |
+| `mint`                                                            | Call `receiveMessage` / `receive_message` on destination (EVM or Starknet) |
+| `mintStarknet`                                                    | Mint directly on Starknet (domain 25)                   |
 | `DOMAIN_CONFIG`                                                   | Domain → RPC + transmitter address mapping              |
 | `CCTP_API_URLS`, `DEFAULT_POLL_INTERVAL_MS`, `REQUEST_TIMEOUT_MS` | Config constants                                        |
 
@@ -95,7 +102,39 @@ PRIVATE_KEY=0x... npx cctp-fetch 0x1234... 6 mainnet --poll --mint
 npx cctp-fetch 0x... 6 testnet --json 2>/dev/null | PRIVATE_KEY=0x... npx cctp-mint -
 ```
 
-**Environment:** `PRIVATE_KEY` (required for mint), `RPC_URL` (optional), `PREFER_MAINNET` (default `true`).
+**Environment:** `PRIVATE_KEY` (required for mint), `RPC_URL` (optional), `PREFER_MAINNET` (default `true`), `STARKNET_ACCOUNT_ADDRESS` (required for Starknet mint).
+
+## Starknet (domain 25)
+
+Minting to Starknet requires a **deployed account** (ArgentX, Braavos, or compatible) and its private key. The `accountAddress` must match the CCTP burn recipient.
+
+**API:**
+
+```ts
+import { mint, mintStarknet } from "@horuslabs/cctp";
+
+// Use mint() – automatically routes to Starknet when destinationDomain is 25
+const result = await mint(attestationData, privateKey, {
+    preferMainnet: false,
+    accountAddress: "0x...", // your deployed Starknet account
+});
+
+// Or use mintStarknet directly
+const result = await mintStarknet(attestationData, privateKey, {
+    accountAddress: "0x...",
+    preferMainnet: false,
+});
+```
+
+**CLI:**
+
+```bash
+# Mint to Starknet
+PRIVATE_KEY=0x... STARKNET_ACCOUNT_ADDRESS=0x... npx cctp-mint attestation.json
+
+# Fetch attestation then mint to Starknet
+PRIVATE_KEY=0x... STARKNET_ACCOUNT_ADDRESS=0x... npx cctp-fetch <txHash> 6 mainnet --poll --mint
+```
 
 ## Domain IDs
 
@@ -107,6 +146,7 @@ npx cctp-fetch 0x... 6 testnet --json 2>/dev/null | PRIVATE_KEY=0x... npx cctp-m
 | 3      | Arbitrum One / Arb Sepolia |
 | 6      | Base / Base Sepolia        |
 | 7      | Polygon                    |
+| 25     | Starknet Mainnet / Sepolia |
 
 ## References
 
